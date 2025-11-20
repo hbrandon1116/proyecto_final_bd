@@ -8,11 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv("config_example.env")
 
-DB_URL = os.getenv("DB_URL")  # ej: postgresql+psycopg2://user:pass@localhost:5432/biblioteca
-
+DB_URL = os.getenv("DB_URL")  
 def main():
     controller = LibraryController(DB_URL)
-    controller.init_db()  # crea tablas (si es necesario)
+    controller.init_db() 
 
     root = tk.Tk()
     root.title("Catálogo Biblioteca - Demo")

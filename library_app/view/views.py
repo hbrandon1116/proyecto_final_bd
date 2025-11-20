@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.controllers import LibraryController
 from functools import partial
+from model.models import Copia
 import os
 
 class PublicSearchView(ttk.Frame):
@@ -46,6 +47,7 @@ class PublicSearchView(ttk.Frame):
             self.tree.insert('', 'end', iid=str(c.id_copia), values=(c.codigo_copia or '', titulo, c.coleccion or '', c.estado or ''))
 
     def on_double_click(self, event):
+        
         iid = self.tree.focus()
         if not iid:
             return
@@ -54,8 +56,7 @@ class PublicSearchView(ttk.Frame):
             if False else self.controller.session.get(type(self.controller.session.get(Copia, c_id)), c_id)
         # Simpler: fetch via session
         copia = self.controller.session.get(self.controller.session.get_bind().engine.table_names and None or None, c_id) if False else None
-        # We'll instead request from DB:
-        from models import Copia
+        
         copia = self.controller.session.get(Copia, c_id)
         if not copia: return
         titulo = copia.material.titulo if copia.material else ""
