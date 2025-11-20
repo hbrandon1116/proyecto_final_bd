@@ -1,0 +1,34 @@
+digraph ER {
+  rankdir=LR;
+  node [shape=record, fontname="Helvetica"];
+
+  usuario [label="{usuario|id_usuario PK\l nombre\l correo\l tipo_usuario\l fecha_registro\l password_hash\l}"];
+  rol [label="{rol|id_rol PK\l nombre\l}"];
+  usuario_rol [label="{usuario_rol|id_usuario FK\l id_rol FK\l PK(id_usuario,id_rol)\l}"];
+
+  idioma [label="{idioma|id_idioma PK\l nombre\l}"];
+  autor [label="{autor|id_autor PK\l nombre\l}"];
+  material [label="{material|id_material PK\l titulo\l descripcion\l id_idioma FK\l tipo_material\l año_publicacion\l isbn\l}"];
+  material_autor [label="{material_autor|id_material FK\l id_autor FK\l orden\l PK(id_material,id_autor)\l}"];
+
+  copia [label="{copia|id_copia PK\l id_material FK\l codigo_copia UNIQUE\l ubicacion\l coleccion\l estado\l formato\l fecha_adquisicion\l}"];
+  prestamo [label="{prestamo|id_prestamo PK\l id_copia FK\l id_usuario FK\l fecha_prestamo\l fecha_devolucion_prevista\l fecha_devolucion_real\l estado\l multa\l}"];
+  reserva [label="{reserva|id_reserva PK\l id_copia FK\l id_usuario FK\l fecha_reserva\l estado\l}"];
+  movimiento [label="{movimiento|id_movimiento PK\l id_copia FK\l accion\l fecha\l detalle\l}"];
+
+  usuario -> usuario_rol [arrowhead=none];
+  rol -> usuario_rol [arrowhead=none];
+
+  idioma -> material [arrowhead=none];
+
+  material -> material_autor [arrowhead=none];
+  autor -> material_autor [arrowhead=none];
+
+  material -> copia [arrowhead=none];
+  copia -> prestamo [arrowhead=none];
+  copia -> reserva [arrowhead=none];
+  copia -> movimiento [arrowhead=none];
+
+  usuario -> prestamo [arrowhead=none];
+  usuario -> reserva [arrowhead=none];
+}
