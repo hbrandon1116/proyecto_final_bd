@@ -9,5 +9,14 @@ Requisitos:
 Asumiendo que tienes PostgreSQL y psql:
 ```bash
 createdb biblioteca_demo
+
+docker run -d \
+  --name postgres-biblioteca \
+  -e POSTGRES_USER=usuario \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=biblioteca_demo \
+  -p 5433:5432 \
+  postgres:15
+
 # o con usuario:
 # createdb -U tu_usuario biblioteca_demo

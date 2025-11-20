@@ -1,8 +1,8 @@
 # app.py
 import tkinter as tk
 from tkinter import ttk
-from controllers import LibraryController
-from views import PublicSearchView, LoginView, UserDashboard
+from controllers.controllers import LibraryController
+from view.views import PublicSearchView, LoginView, UserDashboard
 import os
 from dotenv import load_dotenv
 

@@ -1,7 +1,7 @@
 # views.py
 import tkinter as tk
 from tkinter import ttk, messagebox
-from controllers import LibraryController
+from controllers.controllers import LibraryController
 from functools import partial
 import os
 

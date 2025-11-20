@@ -1,5 +1,5 @@
 # controllers.py
-from models import (
+from model.models import (
     get_engine, get_session, Material, Copia, Usuario, Prestamo, Reserva
 )
 from sqlalchemy import select, and_, or_, func
@@ -11,7 +11,7 @@ class LibraryController:
 
     def init_db(self):
         # Crea tablas si no existen
-        from models import Base
+        from model.models import Base
         Base.metadata.create_all(self.engine)
 
     # --- Public search (sin login) ---
