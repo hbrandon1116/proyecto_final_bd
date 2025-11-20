@@ -14,7 +14,7 @@ def main():
     controller.init_db() 
 
     root = tk.Tk()
-    root.title("Catálogo Biblioteca - Demo")
+    root.title("Catálogo Biblioteca")
 
     nb = ttk.Notebook(root)
     nb.pack(fill='both', expand=True)
