@@ -4,6 +4,11 @@ Requisitos:
 
 ## 
 ```bash
+
+python3 -m venv 
+
+source venv/bin/activate
+
 pip install - requirements.txt
 
 docker run -d \
@@ -17,4 +22,3 @@ docker run -d \
 python seed_database.py
 
 python app.py
-
