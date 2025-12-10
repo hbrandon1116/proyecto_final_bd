@@ -8,32 +8,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+from model.base import Base
+
 
 class Idioma(Base):
     __tablename__ = 'idioma'
     id_idioma = Column(Integer, primary_key=True)
     nombre = Column(String(50), nullable=False, unique=True)
 
-class Usuario(Base):
-    __tablename__ = 'usuario'
-    id_usuario = Column(Integer, primary_key=True)
-    nombre = Column(String(100), nullable=False)
-    correo = Column(String(150), nullable=False, unique=True)
-    tipo_usuario = Column(String(20), nullable=False)  # 'estudiante','profesor','admin'
-    fecha_registro = Column(Date, server_default=func.current_date())
-    password_hash = Column(String(200), nullable=True)
-
-    prestamos = relationship("Prestamo", back_populates="usuario")
-    reservas = relationship("Reserva", back_populates="usuario")    
-
-    def set_password(self, password: str):
-        """Crea un hash SHA-256 y lo almacena."""
-        self.password_hash = hashlib.sha256(password.encode()).hexdigest()
-
-    def check_password(self, password: str) -> bool:
-        """Verifica si el hash coincide con la contraseña ingresada."""
-        return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
 
 class Rol(Base):
     __tablename__ = 'rol'

@@ -1,11 +1,11 @@
 
 from sqlalchemy import *
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import  relationship, sessionmaker
 from sqlalchemy.sql import func
+from model.base import Base
 
 import bcrypt
 
-Base = declarative_base()
 
 class Usuario(Base):
     __tablename__ = 'usuario'

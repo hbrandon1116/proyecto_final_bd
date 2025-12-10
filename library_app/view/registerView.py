@@ -1,30 +1,43 @@
+import tkinter as tk
+from tkinter import ttk, messagebox 
 
+class RegisterView(tk.Frame):
+    def __init__(self, parent, controller, on_register_success, on_back):
+        super().__init__(parent)   # <-- AHORA ES UN FRAME
 
-class RegisterView:
-    def __init__(self, root, controller, on_register_success, on_back):
-        self.root = root
         self.controller = controller
         self.on_register_success = on_register_success
         self.on_back = on_back
 
-        root.title("Registrar Usuario")
 
-        tk.Label(root, text="Nuevo Usuario").pack()
-        self.username = tk.Entry(root)
+        tk.Label(self, text="Nuevo Usuario").pack()
+        self.username = tk.Entry(self)
         self.username.pack()
 
-        tk.Label(root, text="Contraseña").pack()
-        self.password = tk.Entry(root, show="*")
+        tk.Label(self, text="Contraseña").pack()
+        self.password = tk.Entry(self, show="*")
         self.password.pack()
 
-        tk.Button(root, text="Crear usuario", command=self.register).pack(pady=8)
-        tk.Button(root, text="Volver", command=self.on_back).pack()
+        tk.Label(self, text="Correo").pack()
+        self.email = tk.Entry(self)
+        self.email.pack()
 
+        tk.Label(self, text="Tipo de usuario (estudiante/empleado)").pack()
+        self.user_type = tk.Entry(self)
+        self.user_type.pack()
+
+
+        tk.Button(self, text="Crear usuario", command=self.register).pack(pady=8)
+        tk.Button(self, text="Volver", command=self.on_back).pack()
+
+        
     def register(self):
+        
         user = self.username.get()
         pwd = self.password.get()
-
-        ok = self.controller.register(user, pwd)
+        email = self.email.get()
+        user_type = self.user_type.get()
+        ok = self.controller.register(user, email, pwd, user_type)
         if ok:
             messagebox.showinfo("Éxito", "Usuario registrado correctamente.")
             self.on_register_success()

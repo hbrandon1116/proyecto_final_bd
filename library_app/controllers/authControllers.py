@@ -14,13 +14,13 @@ class AuthController:
         self.current_user = None
 
   
-    def login(self, correo: str, password: str) -> bool:
-        if not correo or not password:
+    def login(self, usuario: str, password: str) -> bool:
+        if not usuario or not password:
             return False
 
         user = (
             self.session.query(Usuario)
-            .filter(Usuario.correo == correo)
+            .filter(Usuario.nombre == usuario)
             .first()
         )
 
