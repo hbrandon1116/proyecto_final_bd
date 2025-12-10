@@ -37,3 +37,59 @@ def main():
 
 if __name__ == "__main__":
     main()
+"""
+import tkinter as tk
+from controllers.auth_controller import AuthController
+from view.auth_views import LoginView, RegisterView, MainView
+
+
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.auth_controller = AuthController()
+
+        self.show_login()
+
+    # ------------------------
+    #  VISTAS
+    # ------------------------
+
+    def show_login(self):
+        self.clear_window()
+        LoginView(
+            root=self.root,
+            controller=self.auth_controller,
+            on_login_success=self.show_main,
+            on_open_register=self.show_register
+        )
+
+    def show_register(self):
+        self.clear_window()
+        RegisterView(
+            root=self.root,
+            controller=self.auth_controller,
+            on_register_success=self.show_login,
+            on_back=self.show_login
+        )
+
+    def show_main(self):
+        self.clear_window()
+        MainView(
+            root=self.root,
+            auth_controller=self.auth_controller,
+            on_logout=self.show_login
+        )
+
+    # ------------------------
+    #  Limpiar ventana
+    # ------------------------
+    def clear_window(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
+"""

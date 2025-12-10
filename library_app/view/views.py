@@ -147,3 +147,82 @@ class UserDashboard(ttk.Frame):
         else:
             messagebox.showerror("Error", "No se pudo procesar el pago")
 
+class LoginView:
+    def __init__(self, root, controller, on_login_success, on_open_register):
+        self.root = root
+        self.controller = controller
+        self.on_login_success = on_login_success
+        self.on_open_register = on_open_register
+
+        root.title("Iniciar Sesión")
+
+        tk.Label(root, text="Usuario").pack()
+        self.username = tk.Entry(root)
+        self.username.pack()
+
+        tk.Label(root, text="Contraseña").pack()
+        self.password = tk.Entry(root, show="*")
+        self.password.pack()
+
+        tk.Button(root, text="Ingresar", command=self.login).pack(pady=8)
+        tk.Button(root, text="Registrar usuario", command=self.on_open_register).pack()
+
+    def login(self):
+        user = self.username.get()
+        pwd = self.password.get()
+
+        ok = self.controller.login(user, pwd)
+        if ok:
+            messagebox.showinfo("Éxito", "Inicio de sesión correcto.")
+            self.on_login_success()
+        else:
+            messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
+
+
+class RegisterView:
+    def __init__(self, root, controller, on_register_success, on_back):
+        self.root = root
+        self.controller = controller
+        self.on_register_success = on_register_success
+        self.on_back = on_back
+
+        root.title("Registrar Usuario")
+
+        tk.Label(root, text="Nuevo Usuario").pack()
+        self.username = tk.Entry(root)
+        self.username.pack()
+
+        tk.Label(root, text="Contraseña").pack()
+        self.password = tk.Entry(root, show="*")
+        self.password.pack()
+
+        tk.Button(root, text="Crear usuario", command=self.register).pack(pady=8)
+        tk.Button(root, text="Volver", command=self.on_back).pack()
+
+    def register(self):
+        user = self.username.get()
+        pwd = self.password.get()
+
+        ok = self.controller.register(user, pwd)
+        if ok:
+            messagebox.showinfo("Éxito", "Usuario registrado correctamente.")
+            self.on_register_success()
+        else:
+            messagebox.showerror("Error", "El usuario ya existe.")
+
+
+class MainView:
+    def __init__(self, root, auth_controller, on_logout):
+        self.root = root
+        self.auth_controller = auth_controller
+        self.on_logout = on_logout
+
+        root.title("Panel Principal")
+
+        tk.Label(root, text=f"Bienvenido {auth_controller.current_user['username']}").pack()
+        
+        tk.Button(root, text="Cerrar sesión", command=self.logout).pack(pady=10)
+
+    def logout(self):
+        self.auth_controller.logout()
+        self.on_logout()

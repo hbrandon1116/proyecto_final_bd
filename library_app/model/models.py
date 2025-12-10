@@ -1,4 +1,5 @@
 # models.py
+import hashlib
 from sqlalchemy import (
     create_engine, Column, Integer, String, Date, DateTime, Text,
     ForeignKey, Numeric, CheckConstraint, UniqueConstraint
@@ -23,7 +24,14 @@ class Usuario(Base):
     password_hash = Column(String(200), nullable=True)
 
     prestamos = relationship("Prestamo", back_populates="usuario")
-    reservas = relationship("Reserva", back_populates="usuario")
+    reservas = relationship("Reserva", back_populates="usuario")    
+def set_password(self, password: str):
+        """Crea un hash SHA-256 y lo almacena."""
+        self.password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+def check_password(self, password: str) -> bool:
+        """Verifica si el hash coincide con la contraseña ingresada."""
+        return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
 
 class Rol(Base):
     __tablename__ = 'rol'
@@ -116,3 +124,4 @@ def get_engine(connection_string):
 
 def get_session(engine):
     return sessionmaker(bind=engine, autoflush=False, future=True)()
+

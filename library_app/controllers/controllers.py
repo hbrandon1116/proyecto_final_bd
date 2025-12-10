@@ -1,9 +1,11 @@
 # controllers.py
+
 from model.models import (
     get_engine, get_session, Material, Copia, Usuario, Prestamo, Reserva
 )
 from sqlalchemy import select, and_, or_, func
-
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 class LibraryController:
     def __init__(self, connection_string):
         self.engine = get_engine(connection_string)
@@ -56,4 +58,50 @@ class LibraryController:
         self.session.add(p)
         self.session.commit()
         return True
+
+
+
+class AuthController:
+    def __init__(self, session: Session):
+        self.session = session
+        self.current_user = None
+
+  
+    def login(self, correo: str, password: str) -> bool:
+        """Inicia sesión verificando el correo y la contraseña encriptada."""
+        user = self.session.query(Usuario).filter_by(correo=correo).first()
+
+        if not user:
+            return False
+
+        if user.check_password(password):
+            self.current_user = user
+            return True
+        
+        return False
+
+
+    def register(self, nombre: str, correo: str, password: str, tipo_usuario="estudiante"):
+        """Registra un usuario nuevo con contraseña encriptada."""
+        nuevo = Usuario(
+            nombre=nombre,
+            correo=correo,
+            tipo_usuario=tipo_usuario
+        )
+        nuevo.set_password(password)
+
+        try:
+            self.session.add(nuevo)
+            self.session.commit()
+            return True
+        except IntegrityError:
+            self.session.rollback()
+            return False
+
+
+    def logout(self):
+        self.current_user = None
+
+    def get_current_user(self):
+        return self.current_user
 
