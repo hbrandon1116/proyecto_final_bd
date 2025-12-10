@@ -1,5 +1,6 @@
 # models.py
 import hashlib
+import bcrypt
 from sqlalchemy import (
     create_engine, Column, Integer, String, Date, DateTime, Text,
     ForeignKey, Numeric, CheckConstraint, UniqueConstraint
@@ -25,11 +26,12 @@ class Usuario(Base):
 
     prestamos = relationship("Prestamo", back_populates="usuario")
     reservas = relationship("Reserva", back_populates="usuario")    
-def set_password(self, password: str):
+
+    def set_password(self, password: str):
         """Crea un hash SHA-256 y lo almacena."""
         self.password_hash = hashlib.sha256(password.encode()).hexdigest()
 
-def check_password(self, password: str) -> bool:
+    def check_password(self, password: str) -> bool:
         """Verifica si el hash coincide con la contraseña ingresada."""
         return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
 

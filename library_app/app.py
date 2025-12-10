@@ -1,95 +1,93 @@
-
-import tkinter as tk
-from tkinter import ttk
-from controllers.controllers import LibraryController
-from view.views import PublicSearchView, LoginView, UserDashboard
-import os
 from dotenv import load_dotenv
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+from controllers.authControllers import AuthController
+from view.views import MainView
+from view.loginView import LoginView
+from view.registerView import RegisterView
+from sqlalchemy.orm import sessionmaker
+from model.db import engine
 
-load_dotenv("config_example.env")
 
-DB_URL = os.getenv("DB_URL")  
+
 def main():
-    controller = LibraryController(DB_URL)
-    controller.init_db() 
 
+    # ---------------------------
+    # Crear ventana principal
+    # ---------------------------
     root = tk.Tk()
-    root.title("Catálogo Biblioteca")
-
-    nb = ttk.Notebook(root)
-    nb.pack(fill='both', expand=True)
-
-    public_tab = PublicSearchView(nb, controller)
-    nb.add(public_tab, text="Consulta pública")
-
-    # Login tab
-    def on_login(user):
-        # crear nueva pestaña con dashboard del usuario
-        dash = UserDashboard(nb, controller, user)
-        nb.add(dash, text=f"Usuario: {user.nombre}")
-        nb.select(dash)
-
-    login_tab = LoginView(nb, controller, on_login)
-    nb.add(login_tab, text="Iniciar sesión")
-
+    root.title("Biblioteca App")
     root.geometry("900x600")
+
+    # Notebook (tabs)
+    nb = ttk.Notebook(root)
+    nb.pack(fill="both", expand=True)
+
+    # ---------------------------
+    # Configurar SQLAlchemy
+    # ---------------------------
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Controlador de autenticación
+    auth_controller = AuthController(session)
+
+    # ---------------------------
+    # Callback: después del login
+    # ---------------------------
+    def on_login_success():
+        # Limpiar notebook
+        for tab in nb.tabs():
+            nb.forget(tab)
+
+        main_view = MainView(root, auth_controller, on_logout)
+        nb.add(main_view, text="Inicio")
+
+    # ---------------------------
+    # Callback: después del logout
+    # ---------------------------
+    
+    def on_register_success():
+        messagebox.showinfo("Éxito", "Ahora puedes iniciar sesión.")
+        on_back_to_login()
+
+    def on_back_to_login():
+        for tab in nb.tabs():
+            nb.forget(tab)
+        login_view = LoginView(nb, auth_controller, on_login_success, on_open_register)
+        nb.add(login_view, text="Iniciar sesión")
+
+    def on_open_register():
+    # Limpiar tabs
+        for tab in nb.tabs():
+            nb.forget(tab)
+
+        register_view = RegisterView(
+            nb,
+        auth_controller,
+            on_register_success,
+            on_back_to_login
+        )
+        nb.add(register_view, text="Registrar")
+
+
+    def on_logout():
+        # Limpiar notebook
+        for tab in nb.tabs():
+            nb.forget(tab)
+
+        login_view = LoginView(nb, auth_controller, on_login_success)
+        nb.add(login_view, text="Iniciar sesión")
+
+    # ---------------------------
+    # Mostrar vista inicial (Login)
+    # ---------------------------
+    login_view = LoginView(nb, auth_controller, on_login_success, on_open_register)
+    nb.add(login_view, text="Iniciar sesión")
+
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
-"""
-import tkinter as tk
-from controllers.auth_controller import AuthController
-from view.auth_views import LoginView, RegisterView, MainView
-
-
-class App:
-    def __init__(self, root):
-        self.root = root
-        self.auth_controller = AuthController()
-
-        self.show_login()
-
-    # ------------------------
-    #  VISTAS
-    # ------------------------
-
-    def show_login(self):
-        self.clear_window()
-        LoginView(
-            root=self.root,
-            controller=self.auth_controller,
-            on_login_success=self.show_main,
-            on_open_register=self.show_register
-        )
-
-    def show_register(self):
-        self.clear_window()
-        RegisterView(
-            root=self.root,
-            controller=self.auth_controller,
-            on_register_success=self.show_login,
-            on_back=self.show_login
-        )
-
-    def show_main(self):
-        self.clear_window()
-        MainView(
-            root=self.root,
-            auth_controller=self.auth_controller,
-            on_logout=self.show_login
-        )
-
-    # ------------------------
-    #  Limpiar ventana
-    # ------------------------
-    def clear_window(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
-"""
