@@ -9,13 +9,35 @@ class LoginView(ft.View):
         self.on_login_success = on_login_success
         self.on_open_register = on_open_register
 
-        # Campos del formulario
-        self.username = ft.TextField(label="Usuario", width=300)
-        self.password = ft.TextField(label="Contraseña", password=True, width=300)
+        # Campos con validación
+        self.username = ft.TextField(
+            label="Usuario",
+            width=300,
+            on_change=self.validate_form,
+            border=ft.InputBorder.UNDERLINE,
+        )
 
-        # Botones
-        login_btn = ft.ElevatedButton("Ingresar", on_click=self.login)
-        register_btn = ft.TextButton("Registrar usuario", on_click=lambda _: self.on_open_register())
+        self.password = ft.TextField(
+            label="Contraseña",
+            password=True,
+            can_reveal_password=True,
+            width=300,
+            border=ft.InputBorder.UNDERLINE,
+            on_change=self.validate_form,
+        )
+
+        self.login_btn = ft.ElevatedButton(
+            "Ingresar",
+            on_click=self.login,
+            width=300,
+            height=40,
+            disabled=True
+        )
+
+        register_btn = ft.TextButton(
+            "Registrar usuario",
+            on_click=lambda _: self.on_open_register()
+        )
 
         # Layout
         self.controls = [
@@ -24,7 +46,7 @@ class LoginView(ft.View):
                     ft.Text("Inicio de sesión", size=22, weight="bold"),
                     self.username,
                     self.password,
-                    login_btn,
+                    self.login_btn,
                     register_btn
                 ],
                 alignment="center",
@@ -33,28 +55,32 @@ class LoginView(ft.View):
             )
         ]
 
+
+    def validate_form(self, _):
+        user_ok = len(self.username.value.strip()) > 0
+        pwd_ok = len(self.password.value) > 0
+
+        self.login_btn.disabled = not (user_ok and pwd_ok)
+        self.page.update()
+
     # ---------------------------
-    # Lógica del login
+    # LOGIN
     # ---------------------------
     def login(self, _):
-        user = self.username.value
-        pwd = self.password.value
+        user = self.username.value.strip()
+        pwd = self.password.value.strip()
 
         ok = self.controller.login(user, pwd)
 
         if ok:
-            # Notificación tipo SnackBar
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("Inicio de sesión correcto."),
-            )
-            self.page.snack_bar.open = True
+            self.page.snack.content = ft.Text("Inicio de sesión correcto.")
+            self.page.snack.bgcolor = "green"
+            self.page.snack.open = True
             self.page.update()
             self.on_login_success()
 
         else:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("Usuario o contraseña incorrectos."),
-                bgcolor="red"
-            )
-            self.page.snack_bar.open = True
+            self.page.snack.content = ft.Text("Usuario o contraseña incorrectos.")
+            self.page.snack.bgcolor = "red"
+            self.page.snack.open = True
             self.page.update()

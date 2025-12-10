@@ -17,6 +17,13 @@ def main(page: ft.Page):
     page.horizontal_alignment = "center"
     page.scroll = "auto"
 
+    page.snack = ft.SnackBar(
+        content=ft.Text(""),
+        bgcolor="blue",
+        open=False,
+    )
+    page.overlay.append(page.snack)
+
     # SQLAlchemy
     Session = sessionmaker(bind=engine)
     session = Session()
