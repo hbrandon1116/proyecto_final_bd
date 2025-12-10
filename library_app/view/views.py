@@ -10,12 +10,22 @@ class MainView:
         self.auth_controller = auth_controller
         self.on_logout = on_logout
 
-        root.title("Panel Principal")
+        # 🔥 Frame que contiene esta vista
+        self.frame = tk.Frame(root)
+        self.frame.pack(fill="both", expand=True)
 
-        tk.Label(root, text=f"Bienvenido {auth_controller.current_user['username']}").pack()
-        
-        tk.Button(root, text="Cerrar sesión", command=self.logout).pack(pady=10)
+        tk.Label(
+            self.frame,
+            text=f"Bienvenido {auth_controller.current_user.nombre}"
+        ).pack()
+
+        tk.Button(
+            self.frame,
+            text="Cerrar sesión",
+            command=self.logout
+        ).pack(pady=10)
 
     def logout(self):
+        self.frame.destroy()
         self.auth_controller.logout()
         self.on_logout()
