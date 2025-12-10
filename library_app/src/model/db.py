@@ -10,10 +10,10 @@ from model.usuario import *
 
 
 # Cargar env
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
-ROOT_DIR = os.path.dirname(BASE_DIR)                   
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.dirname(BASE_DIR)
+ROOT_DIR = os.path.dirname(SRC_DIR)
 ENV_PATH = os.path.join(ROOT_DIR, "config_example.env")
-
 load_dotenv(ENV_PATH)
 
 DB_URL = os.getenv("DB_URL")
