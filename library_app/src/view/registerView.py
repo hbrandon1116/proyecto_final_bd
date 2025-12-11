@@ -21,21 +21,35 @@ class RegisterView(ft.View):
 
         # Layout
         self.controls = [
-            ft.Column(
-                [
-                    ft.Text("Registro de usuario", size=22, weight="bold"),
-                    self.username,
-                    self.password,
-                    self.email,
-                    self.user_type,
-                    create_btn,
-                    back_btn,
-                ],
-                alignment="center",
-                horizontal_alignment="center",
-                spacing=15
+            ft.Container(
+                expand=True,
+                alignment=ft.alignment.center,
+                content=ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Column(
+                            [
+                                ft.Text("Registro de usuario", size=22, weight="bold"),
+                                self.username,
+                                self.password,
+                                self.email,
+                                self.user_type,
+                                create_btn,
+                                back_btn,
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=15,
+                        )
+                    ],
+                ),
             )
         ]
+
+
+
+
 
     # ---------------------------
     # Lógica de registro
@@ -60,3 +74,4 @@ class RegisterView(ft.View):
             )
             self.page.snack_bar.open = True
             self.page.update()
+

@@ -40,20 +40,32 @@ class LoginView(ft.View):
         )
 
         # Layout
+                # Layout centrado real
         self.controls = [
-            ft.Column(
-                [
-                    ft.Text("Inicio de sesión", size=22, weight="bold"),
-                    self.username,
-                    self.password,
-                    self.login_btn,
-                    register_btn
-                ],
-                alignment="center",
-                horizontal_alignment="center",
-                spacing=15
+            ft.Container(
+                expand=True,
+                alignment=ft.alignment.center,
+                content=ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Column(
+                            [
+                                ft.Text("Inicio de sesión", size=22, weight="bold"),
+                                self.username,
+                                self.password,
+                                self.login_btn,
+                                register_btn
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=15,
+                        )
+                    ],
+                ),
             )
         ]
+
 
 
     def validate_form(self, _):
