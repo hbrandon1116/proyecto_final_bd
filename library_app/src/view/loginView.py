@@ -15,6 +15,7 @@ class LoginView(ft.View):
             width=300,
             on_change=self.validate_form,
             border=ft.InputBorder.UNDERLINE,
+
         )
 
         self.password = ft.TextField(
@@ -23,7 +24,7 @@ class LoginView(ft.View):
             can_reveal_password=True,
             width=300,
             border=ft.InputBorder.UNDERLINE,
-            on_change=self.validate_form,
+            on_change=self.validate_form
         )
 
         self.login_btn = ft.ElevatedButton(

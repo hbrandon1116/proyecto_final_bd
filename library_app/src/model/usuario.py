@@ -12,12 +12,19 @@ class Usuario(Base):
     id_usuario = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     correo = Column(String(150), nullable=False, unique=True)
-    tipo_usuario = Column(String(20), nullable=False)  # 'estudiante','profesor','admin'
     fecha_registro = Column(Date, server_default=func.current_date())
     password_hash = Column(String(200), nullable=True)
-
     prestamos = relationship("Prestamo", back_populates="usuario")
     reservas = relationship("Reserva", back_populates="usuario")    
+
+
+    # Relación many-to-many con roles
+    roles = relationship(
+        "Rol",
+        secondary="usuario_rol",
+        back_populates="usuarios"
+    )
+
 
     def set_password(self, password: str):
         """Genera un hash seguro con bcrypt."""

@@ -22,3 +22,6 @@ docker run -d \
 python seed_database.py
 
 python app.py
+
+#Modo desarrollo 
+flet run -r library_app/src/app.py

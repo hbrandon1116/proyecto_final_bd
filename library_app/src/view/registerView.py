@@ -10,10 +10,26 @@ class RegisterView(ft.View):
         self.on_back = on_back
 
         # Campos del formulario
-        self.username = ft.TextField(label="Nuevo usuario", width=300)
-        self.password = ft.TextField(label="Contraseña", password=True, width=300)
-        self.email = ft.TextField(label="Correo", width=300)
-        self.user_type = ft.TextField(label="Tipo de usuario (estudiante/empleado)", width=300)
+        self.username = ft.TextField(
+            label="Nuevo usuario", 
+            width=300,
+            border=ft.InputBorder.UNDERLINE,
+
+            )
+        self.password = ft.TextField(
+            label="Contraseña", 
+            border=ft.InputBorder.UNDERLINE,
+            password=True, width=300,
+            can_reveal_password=True,
+            )
+        self.email = ft.TextField(
+                        label="Correo", 
+                        border=ft.InputBorder.UNDERLINE,
+                        width=300)
+        self.user_type = ft.TextField(
+                            label="Tipo de usuario (estudiante/empleado)", 
+                            border=ft.InputBorder.UNDERLINE,
+                            width=300)
 
         # Botones
         create_btn = ft.ElevatedButton("Crear usuario", on_click=self.register)

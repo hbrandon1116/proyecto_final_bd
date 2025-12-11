@@ -18,9 +18,17 @@ def main(page: ft.Page):
     page.scroll = "auto"
 
     page.snack = ft.SnackBar(
-        content=ft.Text(""),
-        bgcolor="blue",
-        open=False,
+    content=ft.Container(
+        padding=15,
+        border_radius=20,
+        bgcolor="white",
+        shadow=ft.BoxShadow(
+            spread_radius=1,
+            blur_radius=12,
+        ),
+    ),
+    open=False,
+    margin=ft.Margin(0, 0, 0, 30), 
     )
     page.overlay.append(page.snack)
 
@@ -93,6 +101,5 @@ def main(page: ft.Page):
     go_to("login")
 
 
-# Lanzar app Flet
 if __name__ == "__main__":
     ft.app(target=main)

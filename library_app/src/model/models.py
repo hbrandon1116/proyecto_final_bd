@@ -22,6 +22,13 @@ class Rol(Base):
     id_rol = Column(Integer, primary_key=True)
     nombre = Column(String(50), unique=True, nullable=False)
 
+    usuarios = relationship(
+        "Usuario",
+        secondary="usuario_rol",
+        back_populates="roles"
+    )
+
+
 class UsuarioRol(Base):
     __tablename__ = 'usuario_rol'
     id_usuario = Column(Integer, ForeignKey('usuario.id_usuario', ondelete='CASCADE'), primary_key=True)
