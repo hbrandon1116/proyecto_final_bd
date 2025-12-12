@@ -29,6 +29,8 @@ class MaterialView(ft.Column):
                 ft.DataColumn(ft.Text("Idioma")),
                 ft.DataColumn(ft.Text("Año")),
                 ft.DataColumn(ft.Text("Autores")),
+                ft.DataColumn(ft.Text("ISBN")),
+                ft.DataColumn(ft.Text("Acciones")),
             ],
             rows=[],
             expand=True
@@ -50,17 +52,25 @@ class MaterialView(ft.Column):
         self.table.rows = []
         for m in materiales:
             autores = ", ".join([ma.autor.nombre for ma in m.autores])
+            idioma = self.session.query(Idioma).filter_by(id_idioma=m.id_idioma).first()
 
             self.table.rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(m.id_material))),
                         ft.DataCell(ft.Text(m.titulo)),
-                        ft.DataCell(ft.Text(m.id_idioma or "")),
+                        ft.DataCell(ft.Text(idioma.nombre if idioma else "")),
                         ft.DataCell(ft.Text(str(m.año_publicacion or ""))),
                         ft.DataCell(ft.Text(autores)),
-                    ],
-                    on_select_changed=lambda e, mat=m: self.open_detail_modal(mat)
+                        ft.DataCell(ft.Text(m.isbn or "")),
+                        ft.DataCell(
+                            ft.IconButton(
+                                icon=ft.Icons.VISIBILITY,
+                                tooltip="Ver detalles",
+                                on_click=lambda e, mat=m: self.open_detail_modal(mat)
+                            )
+                        ),
+                    ]
                 )
             )
         self.page.update()
@@ -80,16 +90,24 @@ class MaterialView(ft.Column):
         self.table.rows = []
         for m in query:
             autores = ", ".join([ma.autor.nombre for ma in m.autores])
+            idioma = self.session.query(Idioma).filter_by(id_idioma=m.id_idioma).first()
             self.table.rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(m.id_material))),
                         ft.DataCell(ft.Text(m.titulo)),
-                        ft.DataCell(ft.Text(m.id_idioma or "")),
+                        ft.DataCell(ft.Text(idioma.nombre if idioma else "")),
                         ft.DataCell(ft.Text(str(m.año_publicacion or ""))),
                         ft.DataCell(ft.Text(autores)),
-                    ],
-                    on_select_changed=lambda e, mat=m: self.open_detail_modal(mat)
+                        ft.DataCell(ft.Text(m.isbn or "")),
+                        ft.DataCell(
+                            ft.IconButton(
+                                icon=ft.Icons.VISIBILITY,
+                                tooltip="Ver detalles",
+                                on_click=lambda e, mat=m: self.open_detail_modal(mat)
+                            )
+                        ),
+                    ]
                 )
             )
         self.page.update()
@@ -98,7 +116,9 @@ class MaterialView(ft.Column):
     #              MODAL PARA DETALLE + EDITAR + BORRAR
     # --------------------------------------------------------
     def open_detail_modal(self, material: Material):
+        print("Abriendo modal para material ID:", material.id_material)
         autores = ", ".join([ma.autor.nombre for ma in material.autores])
+        idioma = self.session.query(Idioma).filter_by(id_idioma=material.id_idioma).first()
 
         dialog = ft.AlertDialog(
             modal=True,
@@ -106,7 +126,7 @@ class MaterialView(ft.Column):
             content=ft.Column(
                 [
                     ft.Text(f"Título: {material.titulo}"),
-                    ft.Text(f"Idioma ID: {material.id_idioma}"),
+                    ft.Text(f"Idioma ID: {idioma.nombre if idioma else 'Desconocido'}"),
                     ft.Text(f"Año: {material.año_publicacion}"),
                     ft.Text(f"Descripción: {material.descripcion}"),
                     ft.Text(f"Autores: {autores}")
@@ -122,7 +142,7 @@ class MaterialView(ft.Column):
 
         self.page.dialog = dialog
         dialog.open = True
-        self.page.update()
+        self.page.open(dialog)
 
     def close_dialog(self, dialog):
         dialog.open = False
@@ -179,45 +199,85 @@ class MaterialView(ft.Column):
 
         self.page.dialog = edit_dialog
         edit_dialog.open = True
-        self.page.update()
+        self.page.open(edit_dialog)
 
     # --------------------------------------------------------
     #             MODAL PARA CREAR NUEVO MATERIAL
     # --------------------------------------------------------
     def open_create_modal(self, e):
+
+        autores = self.session.query(Autor).order_by(Autor.nombre).all()
+        idiomas = self.session.query(Idioma).order_by(Idioma.nombre).all()
+        autor_dropdown = ft.Dropdown(
+            label="Autor",
+            width=300,
+            options=[
+                ft.dropdown.Option(str(a.id_autor), a.nombre)
+                for a in autores
+            ],
+        )
+        idioma_dropdown = ft.Dropdown(
+            label="Idioma",
+            width=300,
+            options=[
+                ft.dropdown.Option(str(i.id_idioma), i.nombre)
+                for i in idiomas
+            ],
+        )
+
+
         titulo = ft.TextField(label="Título")
         descripcion = ft.TextField(label="Descripción", multiline=True)
         anio = ft.TextField(label="Año publicación")
-        idioma = ft.TextField(label="ID idioma")
+        idioma = idioma_dropdown
+        isbn = ft.TextField(label="ISBN")
+
 
         create_btn = ft.ElevatedButton("Crear")
 
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("Nuevo Material"),
-            content=ft.Column([titulo, descripcion, anio, idioma], scroll="auto"),
+            content=ft.Column([titulo, descripcion, anio, idioma
+            , isbn, autor_dropdown
+            ], scroll="auto"),
             actions=[
                 create_btn,
                 ft.TextButton("Cancelar", on_click=lambda _: self.close_dialog(dialog))
             ]
         )
 
+        self.page.dialog = dialog
+        dialog.open = True
+        self.page.open(dialog)
+
         def create_material(e):
+            id_autor=int(autor_dropdown.value) if autor_dropdown.value else None
             nuevo = Material(
                 titulo=titulo.value,
                 descripcion=descripcion.value,
                 año_publicacion=int(anio.value) if anio.value.isdigit() else None,
                 id_idioma=int(idioma.value) if idioma.value else None,
+                tipo_material="Libro",
+                isbn=isbn.value,
             )
 
-            self.session.add(nuevo)
-            self.session.commit()
 
+            self.session.add(nuevo)
+            self.session.flush()
+
+            if autor_dropdown.value:
+                relacion = MaterialAutor(
+                    id_material=nuevo.id_material,
+                    id_autor=int(autor_dropdown.value),
+                )
+                self.session.add(relacion)
+
+            self.session.commit()
             dialog.open = False
             self.load_materials()
+            self.page.update()
 
         create_btn.on_click = create_material
 
-        self.page.dialog = dialog
-        dialog.open = True
-        self.page.update()
+       

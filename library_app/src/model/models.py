@@ -49,8 +49,13 @@ class Material(Base):
     año_publicacion = Column(Integer)
     isbn = Column(String(30))
 
-    autores = relationship("MaterialAutor", back_populates="material")
+    autores = relationship(
+        "MaterialAutor",
+        cascade="all, delete-orphan",
+        back_populates="material"
+    )    
     copias = relationship("Copia", back_populates="material")
+
 
 class MaterialAutor(Base):
     __tablename__ = 'material_autor'

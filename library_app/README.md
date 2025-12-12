@@ -19,6 +19,8 @@ docker run -d \
   -p 5433:5432 \
   postgres:15
 
+docker exec -it postgres-biblioteca psql -U usuario -d biblioteca_demo
+
 python seed_database.py
 
 python app.py

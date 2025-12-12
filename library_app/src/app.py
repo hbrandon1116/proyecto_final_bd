@@ -17,7 +17,6 @@ def main(page: ft.Page):
     page.window_height = 600
     page.horizontal_alignment = "center"
     page.scroll = "auto"
-
     page.snack = ft.SnackBar(
     content=ft.Container(
         padding=15,
