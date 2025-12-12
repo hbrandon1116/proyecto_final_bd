@@ -1,3 +1,8 @@
+import sys
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
 from sqlalchemy.orm import sessionmaker
 from model.db import engine
 from model.models import Rol  
@@ -18,4 +23,4 @@ for r in roles:
         session.add(role)
 
 session.commit()
-print("✔️ Roles creados correctamente")
+print("Roles creados correctamente")

@@ -4,6 +4,7 @@ from controllers.authControllers import AuthController
 from view.views import MainView
 from view.loginView import LoginView
 from view.registerView import RegisterView
+from view.librarianView import LibrarianView
 from sqlalchemy.orm import sessionmaker
 from model.db import engine
 
@@ -63,6 +64,16 @@ def main(page: ft.Page):
                 )
             )
 
+
+        elif view_name == "admin":
+            page.views.append(
+                LibrarianView(
+                    page,
+                    auth_controller,
+                    on_logout
+                )
+            )
+
         elif view_name == "home":
             page.views.append(
                 MainView(
@@ -76,8 +87,18 @@ def main(page: ft.Page):
 
     # ----------- Callbacks -----------
 
+   
     def on_login_success():
-        go_to("home")
+        #user = auth_controller.get_current_user()
+
+        # Bibliotecario
+        if auth_controller.user_has_role("bibliotecario"):
+            go_to("admin")
+
+        # Profesor o estudiante
+        else:
+            go_to("home")
+
 
     def on_logout():
         go_to("login")

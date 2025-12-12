@@ -9,6 +9,12 @@ class RegisterView(ft.View):
         self.on_register_success = on_register_success
         self.on_back = on_back
 
+        roles = self.controller.get_roles() 
+
+        role_items = [
+            ft.dropdown.Option(r.nombre) for r in roles
+        ]
+
         # Campos del formulario
         self.username = ft.TextField(
             label="Nuevo usuario", 
@@ -26,10 +32,12 @@ class RegisterView(ft.View):
                         label="Correo", 
                         border=ft.InputBorder.UNDERLINE,
                         width=300)
-        self.user_type = ft.TextField(
-                            label="Tipo de usuario (estudiante/empleado)", 
-                            border=ft.InputBorder.UNDERLINE,
-                            width=300)
+      
+        self.user_type = ft.Dropdown(
+            label="Seleccione el rol",
+            width=300,
+            options=role_items,
+        )
 
         # Botones
         create_btn = ft.ElevatedButton("Crear usuario", on_click=self.register)
