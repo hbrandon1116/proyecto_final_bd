@@ -1,5 +1,6 @@
 import flet as ft
 from view.materialView import MaterialView
+from view.copiaView import CopiaView
 
 class LibrarianView(ft.View):
     def __init__(self, page, auth_controller, on_logout):
@@ -30,7 +31,7 @@ class LibrarianView(ft.View):
                 tabs=[
                     ft.Tab(text="Usuarios"),
                     ft.Tab(text="Materiales"),
-                    ft.Tab(text="Ejemplares"),
+                    ft.Tab(text="Copias"),
                     ft.Tab(text="Préstamos"),
                     ft.Tab(text="Reservas"),
                     ft.Tab(text="Dashboard"),
@@ -60,7 +61,10 @@ class LibrarianView(ft.View):
                 page=self.page
             )
         elif index == 2:
-            self.content_area.content = ft.Text("CRUD de Ejemplares")
+            self.content_area.content = CopiaView(
+            session=self.auth.session,
+                page=self.page
+            )
         elif index == 3:
             self.content_area.content = ft.Text("Gestión de Préstamos")
         elif index == 4:

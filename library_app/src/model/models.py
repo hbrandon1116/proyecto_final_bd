@@ -54,7 +54,9 @@ class Material(Base):
         cascade="all, delete-orphan",
         back_populates="material"
     )    
-    copias = relationship("Copia", back_populates="material")
+    copias = relationship("Copia",
+            cascade="all, delete-orphan",
+     back_populates="material")
 
 
 class MaterialAutor(Base):
@@ -66,20 +68,36 @@ class MaterialAutor(Base):
     material = relationship("Material", back_populates="autores")
     autor = relationship("Autor")
 
+class Estado(Base):
+    __tablename__ = 'estado'
+    id_estado = Column(Integer, primary_key=True)
+    nombre = Column(String(50), unique=True, nullable=False)
+
+    copias = relationship("Copia", back_populates="estado_rel")
+
+
+
 class Copia(Base):
     __tablename__ = 'copia'
+
     id_copia = Column(Integer, primary_key=True)
-    id_material = Column(Integer, ForeignKey('material.id_material', ondelete='CASCADE'))
-    codigo_copia = Column(String(50), unique=True, nullable=True)
+    
+    id_material = Column(Integer, ForeignKey('material.id_material', ondelete='CASCADE'), nullable=False)
+    id_estado = Column(Integer, ForeignKey('estado.id_estado'), nullable=False)
+
+    codigo_copia = Column(String(50), unique=True, nullable=False)
     ubicacion = Column(String(200))
-    coleccion = Column(String(100), nullable=True)  # <-- agregado para filtro por colección
-    estado = Column(String(20), nullable=False)  # CHECK handled in DB
+    coleccion = Column(String(100), nullable=True)
     formato = Column(String(30), default='fisico')
     fecha_adquisicion = Column(Date, server_default=func.current_date())
 
+    # relaciones
     material = relationship("Material", back_populates="copias")
+    estado_rel = relationship("Estado", back_populates="copias")
     prestamos = relationship("Prestamo", back_populates="copia")
     reservas = relationship("Reserva", back_populates="copia")
+
+
 
 class Prestamo(Base):
     __tablename__ = 'prestamo'

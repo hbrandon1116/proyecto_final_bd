@@ -15,7 +15,6 @@ class RegisterView(ft.View):
             ft.dropdown.Option(r.nombre) for r in roles
         ]
 
-        # Campos del formulario
         self.username = ft.TextField(
             label="Nuevo usuario", 
             width=300,

@@ -5,6 +5,7 @@ from view.views import MainView
 from view.loginView import LoginView
 from view.registerView import RegisterView
 from view.librarianView import LibrarianView
+from view.studentView import StudentView
 from sqlalchemy.orm import sessionmaker
 from model.db import engine
 
@@ -75,7 +76,7 @@ def main(page: ft.Page):
 
         elif view_name == "home":
             page.views.append(
-                MainView(
+                StudentView(
                     page,
                     auth_controller,
                     on_logout
