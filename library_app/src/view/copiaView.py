@@ -1,6 +1,7 @@
 import flet as ft
-from model.models import Copia, Material,Estado
+from model.models import Copia, Material, Estado
 from sqlalchemy.orm import Session
+from controllers.copiaController import CopiaController
 
 class CopiaView(ft.Column):
 
@@ -8,10 +9,10 @@ class CopiaView(ft.Column):
         super().__init__()
         self.session = session
         self.page = page
+        self.controller = CopiaController(session)
 
 
          # ---- Controles UI ----
-
          
         self.search_field = ft.TextField(
             hint_text="Buscar por título...",
@@ -59,7 +60,7 @@ class CopiaView(ft.Column):
     def load_data(self):
         self.table.rows.clear()
 
-        copias = self.session.query(Copia).all()
+        copias = self.controller.get_all_copias()
 
         for c in copias:
             self.table.rows.append(
@@ -67,16 +68,16 @@ class CopiaView(ft.Column):
                     cells=[
                         ft.DataCell(ft.Text(str(c.id_copia))),
                         ft.DataCell(ft.Text(c.codigo_copia)),
-                        ft.DataCell(ft.Text(c.material.titulo if c.material else "")),
-                        ft.DataCell(ft.Text(c.material.isbn if c.material else "")),
-                        ft.DataCell(ft.Text(c.estado_rel.nombre if c.estado_rel else "")),
+                        ft.DataCell(ft.Text(self.controller.get_copia_material_title(c))),
+                        ft.DataCell(ft.Text(self.controller.get_copia_material_isbn(c))),
+                        ft.DataCell(ft.Text(self.controller.get_copia_estado_nombre(c))),
                         ft.DataCell(ft.Text(c.coleccion or "")),
                         ft.DataCell(ft.Text(c.ubicacion or "")),
                         ft.DataCell(ft.Text(c.formato)),
                         ft.DataCell(
                             ft.Row([
                                 ft.IconButton(ft.Icons.EDIT, on_click=lambda _, cid=c.id_copia: self.open_edit_dialog(cid)),
-                                ft.IconButton(ft.Icons.DELETE, on_click=lambda _: self.delete_item(c)),
+                                ft.IconButton(ft.Icons.DELETE, on_click=lambda _, cop=c: self.delete_item(cop)),
                             ])
                         ),
                     ]
@@ -89,7 +90,8 @@ class CopiaView(ft.Column):
     # Crear copia
     # ----------------------------
     def open_create_dialog(self, e):
-        materiales = self.session.query(Material).all()
+        materiales = self.controller.get_all_materiales()
+        estado_all = self.controller.get_all_estados()
 
         material_dd = ft.Dropdown(
             label="Material",
@@ -103,8 +105,6 @@ class CopiaView(ft.Column):
         codigo = ft.TextField(label="Código de copia")
         ubicacion = ft.TextField(label="Ubicación")
         coleccion = ft.TextField(label="Colección")
-
-        estado_all = self.session.query(Estado).order_by(Estado.nombre).all()
 
         estado = ft.Dropdown(
             label="Estado",
@@ -122,7 +122,6 @@ class CopiaView(ft.Column):
                 ft.dropdown.Option("fisico"),
                 ft.dropdown.Option("digital"),
             ]
-         
         )
 
         dialog = ft.AlertDialog(
@@ -142,16 +141,15 @@ class CopiaView(ft.Column):
         )
 
         def save(_):
-            nueva = Copia(
+            self.controller.create_copia(
                 id_material=int(material_dd.value),
                 codigo_copia=codigo.value,
                 ubicacion=ubicacion.value,
                 coleccion=coleccion.value,
                 id_estado=int(estado.value),
-                formato=formato.value,
+                formato=formato.value
             )
-            self.session.add(nueva)
-            self.session.commit()
+            
             dialog.open = False
             self.load_data()
             self.page.update()
@@ -160,7 +158,7 @@ class CopiaView(ft.Column):
         
         self.page.dialog = dialog
         dialog.open = True
-        self.page.update()
+        self.page.open(dialog)
 
 
 
@@ -172,11 +170,12 @@ class CopiaView(ft.Column):
     # Editar copia
     # ----------------------------
     def open_edit_dialog(self, copia_id):
-        copia = self.session.query(Copia).filter_by(id_copia=copia_id).first()
+        copia = self.controller.get_copia_by_id(copia_id)
         if not copia:
             return
 
-        materiales = self.session.query(Material).all()
+        materiales = self.controller.get_all_materiales()
+        estado_all = self.controller.get_all_estados()
 
         material_dd = ft.Dropdown(
             label="Material",
@@ -191,8 +190,6 @@ class CopiaView(ft.Column):
         codigo = ft.TextField(label="Código de copia", value=copia.codigo_copia)
         ubicacion = ft.TextField(label="Ubicación", value=copia.ubicacion or "")
         coleccion = ft.TextField(label="Colección", value=copia.coleccion or "")
-
-        estado_all = self.session.query(Estado).order_by(Estado.nombre).all()
 
         estado = ft.Dropdown(
             label="Estado",
@@ -231,14 +228,16 @@ class CopiaView(ft.Column):
         )
 
         def save(_):
-            copia.id_material = int(material_dd.value)
-            copia.codigo_copia = codigo.value
-            copia.ubicacion = ubicacion.value
-            copia.coleccion = coleccion.value
-            copia.id_estado = int(estado.value)
-            copia.formato = formato.value
-
-            self.session.commit()
+            self.controller.update_copia(
+                copia_id=copia_id,
+                id_material=int(material_dd.value),
+                codigo_copia=codigo.value,
+                ubicacion=ubicacion.value,
+                coleccion=coleccion.value,
+                id_estado=int(estado.value),
+                formato=formato.value
+            )
+            
             dialog.open = False
             self.load_data()
             self.page.update()
@@ -250,6 +249,5 @@ class CopiaView(ft.Column):
         self.page.open(dialog)
 
     def delete_item(self, copia):
-        self.session.delete(copia)
-        self.session.commit()
+        self.controller.delete_copia(copia.id_copia)
         self.load_data()

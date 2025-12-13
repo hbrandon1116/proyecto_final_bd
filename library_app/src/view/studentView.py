@@ -2,6 +2,7 @@ import flet as ft
 from sqlalchemy.orm import Session
 from model.models import Copia, Material, Prestamo, Reserva, Estado
 from datetime import date, timedelta
+from controllers.studentController import StudentController
 
 
 class StudentView(ft.View):
@@ -91,6 +92,7 @@ class CatalogView(ft.Column):
         self.session = session
         self.page = page
         self.user = user
+        self.controller = StudentController(session)
         
         # Controles de búsqueda
         self.search_field = ft.TextField(
@@ -126,49 +128,37 @@ class CatalogView(ft.Column):
         """Carga todos los materiales que tienen al menos una copia disponible"""
         self.table.rows.clear()
         
-        # Obtener materiales con copias disponibles
-        estado_disponible = self.session.query(Estado).filter_by(nombre="disponible").first()
+        materiales_info = self.controller.get_available_materials()
         
-        if not estado_disponible:
-            return
-        
-        # Obtener todos los materiales
-        materiales = self.session.query(Material).all()
-        
-        for material in materiales:
-            # Contar copias disponibles de este material
-            copias_disponibles = self.session.query(Copia).filter_by(
-                id_material=material.id_material,
-                id_estado=estado_disponible.id_estado
-            ).count()
+        for item in materiales_info:
+            material = item['material']
+            copias_disponibles = item['copias_disponibles']
+            autores = self.controller.get_material_authors(material)
             
-            if copias_disponibles > 0:
-                autores = ", ".join([ma.autor.nombre for ma in material.autores])
-                
-                self.table.rows.append(
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(material.titulo)),
-                            ft.DataCell(ft.Text(autores or "N/A")),
-                            ft.DataCell(ft.Text(material.isbn or "N/A")),
-                            ft.DataCell(ft.Text(str(material.año_publicacion or "N/A"))),
-                            ft.DataCell(ft.Text(str(copias_disponibles))),
-                            ft.DataCell(
-                                ft.TextButton(
-                                    "Solicitar",
-                                    icon=ft.Icons.ADD_CIRCLE,
-                                    on_click=lambda e, m=material: self.request_loan(m)
-                                )
-                            ),
-                        ]
-                    )
+            self.table.rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(material.titulo)),
+                        ft.DataCell(ft.Text(autores or "N/A")),
+                        ft.DataCell(ft.Text(material.isbn or "N/A")),
+                        ft.DataCell(ft.Text(str(material.año_publicacion or "N/A"))),
+                        ft.DataCell(ft.Text(str(copias_disponibles))),
+                        ft.DataCell(
+                            ft.TextButton(
+                                "Solicitar",
+                                icon=ft.Icons.ADD_CIRCLE,
+                                on_click=lambda e, m=material: self.request_loan(m)
+                            )
+                        ),
+                    ]
                 )
+            )
         
         self.page.update()
     
     def search_materials(self, e):
         """Busca materiales por título o autor"""
-        text = self.search_field.value.lower()
+        text = self.search_field.value
         
         if not text:
             self.load_available_materials()
@@ -176,43 +166,31 @@ class CatalogView(ft.Column):
         
         self.table.rows.clear()
         
-        estado_disponible = self.session.query(Estado).filter_by(nombre="disponible").first()
+        materiales_info = self.controller.search_available_materials(text)
         
-        if not estado_disponible:
-            return
-        
-        # Buscar por título
-        materiales = self.session.query(Material).filter(
-            Material.titulo.ilike(f"%{text}%")
-        ).all()
-        
-        for material in materiales:
-            copias_disponibles = self.session.query(Copia).filter_by(
-                id_material=material.id_material,
-                id_estado=estado_disponible.id_estado
-            ).count()
+        for item in materiales_info:
+            material = item['material']
+            copias_disponibles = item['copias_disponibles']
+            autores = self.controller.get_material_authors(material)
             
-            if copias_disponibles > 0:
-                autores = ", ".join([ma.autor.nombre for ma in material.autores])
-                
-                self.table.rows.append(
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(material.titulo)),
-                            ft.DataCell(ft.Text(autores or "N/A")),
-                            ft.DataCell(ft.Text(material.isbn or "N/A")),
-                            ft.DataCell(ft.Text(str(material.año_publicacion or "N/A"))),
-                            ft.DataCell(ft.Text(str(copias_disponibles))),
-                            ft.DataCell(
-                                ft.TextButton(
-                                    "Solicitar",
-                                    icon=ft.Icons.ADD_CIRCLE,
-                                    on_click=lambda e, m=material: self.request_loan(m)
-                                )
-                            ),
-                        ]
-                    )
+            self.table.rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(material.titulo)),
+                        ft.DataCell(ft.Text(autores or "N/A")),
+                        ft.DataCell(ft.Text(material.isbn or "N/A")),
+                        ft.DataCell(ft.Text(str(material.año_publicacion or "N/A"))),
+                        ft.DataCell(ft.Text(str(copias_disponibles))),
+                        ft.DataCell(
+                            ft.TextButton(
+                                "Solicitar",
+                                icon=ft.Icons.ADD_CIRCLE,
+                                on_click=lambda e, m=material: self.request_loan(m)
+                            )
+                        ),
+                    ]
                 )
+            )
         
         self.page.update()
     
@@ -261,23 +239,12 @@ class CatalogView(ft.Column):
                     self.show_message("Los días deben ser mayor a 0", error=True)
                     return
                 
-                # Cambiar estado de la copia a "prestado"
-                estado_prestado = self.session.query(Estado).filter_by(nombre="prestado").first()
-                
-                # Crear préstamo
-                nuevo_prestamo = Prestamo(
-                    id_copia=copia.id_copia,
+                # Usar el controlador para crear el préstamo
+                self.controller.request_loan(
+                    id_material=material.id_material,
                     id_usuario=self.user.id_usuario,
-                    fecha_prestamo=date.today(),
-                    fecha_devolucion_prevista=date.today() + timedelta(days=dias),
-                    estado="activo",
-                    multa=0
+                    dias=dias
                 )
-                
-                copia.id_estado = estado_prestado.id_estado
-                
-                self.session.add(nuevo_prestamo)
-                self.session.commit()
                 
                 dialog.open = False
                 self.show_message("Préstamo solicitado exitosamente")
@@ -286,7 +253,6 @@ class CatalogView(ft.Column):
             except ValueError:
                 self.show_message("Ingrese un número válido de días", error=True)
             except Exception as ex:
-                self.session.rollback()
                 self.show_message(f"Error al crear préstamo: {str(ex)}", error=True)
         
         dialog.actions[0].on_click = confirm_loan
@@ -317,6 +283,7 @@ class MyLoansView(ft.Column):
         self.session = session
         self.page = page
         self.user = user
+        self.controller = StudentController(session)
         
         self.table = ft.DataTable(
             columns=[
@@ -345,9 +312,7 @@ class MyLoansView(ft.Column):
         """Carga los préstamos del usuario"""
         self.table.rows.clear()
         
-        prestamos = self.session.query(Prestamo).filter_by(
-            id_usuario=self.user.id_usuario
-        ).order_by(Prestamo.fecha_prestamo.desc()).all()
+        prestamos = self.controller.get_user_loans(self.user.id_usuario)
         
         for prestamo in prestamos:
             material_titulo = prestamo.copia.material.titulo if prestamo.copia and prestamo.copia.material else "N/A"
@@ -393,27 +358,13 @@ class MyLoansView(ft.Column):
         
         def confirm_return(e):
             try:
-                # Cambiar estado del préstamo
-                prestamo.estado = "devuelto"
-                prestamo.fecha_devolucion_real = date.today()
-                
-                # Calcular multa si hay retraso
-                if prestamo.fecha_devolucion_real > prestamo.fecha_devolucion_prevista:
-                    dias_retraso = (prestamo.fecha_devolucion_real - prestamo.fecha_devolucion_prevista).days
-                    prestamo.multa = dias_retraso * 5  # $5 por día de retraso
-                
-                # Cambiar estado de la copia a disponible
-                estado_disponible = self.session.query(Estado).filter_by(nombre="disponible").first()
-                prestamo.copia.id_estado = estado_disponible.id_estado
-                
-                self.session.commit()
+                self.controller.return_loan(prestamo)
                 
                 dialog.open = False
                 self.show_message("Material devuelto exitosamente")
                 self.load_loans()
                 
             except Exception as ex:
-                self.session.rollback()
                 self.show_message(f"Error al devolver: {str(ex)}", error=True)
         
         dialog.actions[0].on_click = confirm_return
@@ -444,6 +395,7 @@ class MyReservationsView(ft.Column):
         self.session = session
         self.page = page
         self.user = user
+        self.controller = StudentController(session)
         
         self.table = ft.DataTable(
             columns=[
@@ -470,9 +422,7 @@ class MyReservationsView(ft.Column):
         """Carga las reservas del usuario"""
         self.table.rows.clear()
         
-        reservas = self.session.query(Reserva).filter_by(
-            id_usuario=self.user.id_usuario
-        ).order_by(Reserva.fecha_reserva.desc()).all()
+        reservas = self.controller.get_user_reservations(self.user.id_usuario)
         
         for reserva in reservas:
             material_titulo = reserva.copia.material.titulo if reserva.copia and reserva.copia.material else "N/A"
@@ -505,21 +455,11 @@ class MyReservationsView(ft.Column):
     def cancel_reservation(self, reserva: Reserva):
         """Cancela una reserva"""
         try:
-            reserva.estado = "cancelada"
-            
-            # Liberar la copia si estaba reservada
-            estado_disponible = self.session.query(Estado).filter_by(nombre="disponible").first()
-            if reserva.copia.id_estado != estado_disponible.id_estado:
-                estado_reservado = self.session.query(Estado).filter_by(nombre="reservado").first()
-                if reserva.copia.id_estado == estado_reservado.id_estado:
-                    reserva.copia.id_estado = estado_disponible.id_estado
-            
-            self.session.commit()
+            self.controller.cancel_reservation(reserva)
             self.show_message("Reserva cancelada")
             self.load_reservations()
             
         except Exception as ex:
-            self.session.rollback()
             self.show_message(f"Error al cancelar: {str(ex)}", error=True)
     
     def show_message(self, message, error=False):

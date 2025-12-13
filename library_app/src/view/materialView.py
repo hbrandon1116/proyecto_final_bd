@@ -1,6 +1,7 @@
 import flet as ft
 from sqlalchemy.orm import Session
-from model.models import Material, Autor, MaterialAutor, Idioma
+from model.models import Material, Autor, Idioma
+from controllers.materialController import MaterialController
 
 
 class MaterialView(ft.Column):
@@ -8,6 +9,7 @@ class MaterialView(ft.Column):
         super().__init__()
         self.session = session
         self.page = page
+        self.controller = MaterialController(session)
 
         # ---- Controles UI ----
         self.search_field = ft.TextField(
@@ -47,19 +49,25 @@ class MaterialView(ft.Column):
     #                  CARGAR MATERIALES
     # --------------------------------------------------------
     def load_materials(self):
-        materiales = self.session.query(Material).all()
+        materiales = self.controller.get_all_materials()
 
         self.table.rows = []
         for m in materiales:
-            autores = ", ".join([ma.autor.nombre for ma in m.autores])
-            idioma = self.session.query(Idioma).filter_by(id_idioma=m.id_idioma).first()
+            autores = self.controller.get_material_authors(m)
+            
+            # Obtener idioma si existe
+            idiomas = self.controller.get_all_idiomas()
+            idioma_nombre = ""
+            if m.id_idioma:
+                idioma = next((i for i in idiomas if i.id_idioma == m.id_idioma), None)
+                idioma_nombre = idioma.nombre if idioma else ""
 
             self.table.rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(m.id_material))),
                         ft.DataCell(ft.Text(m.titulo)),
-                        ft.DataCell(ft.Text(idioma.nombre if idioma else "")),
+                        ft.DataCell(ft.Text(idioma_nombre)),
                         ft.DataCell(ft.Text(str(m.año_publicacion or ""))),
                         ft.DataCell(ft.Text(autores)),
                         ft.DataCell(ft.Text(m.isbn or "")),
@@ -79,24 +87,27 @@ class MaterialView(ft.Column):
     #                  BUSCAR MATERIALES
     # --------------------------------------------------------
     def search_materials(self, e):
-        text = self.search_field.value.lower()
+        text = self.search_field.value
 
-        query = (
-            self.session.query(Material)
-            .filter(Material.titulo.ilike(f"%{text}%"))
-            .all()
-        )
+        materiales = self.controller.search_materials(text)
 
         self.table.rows = []
-        for m in query:
-            autores = ", ".join([ma.autor.nombre for ma in m.autores])
-            idioma = self.session.query(Idioma).filter_by(id_idioma=m.id_idioma).first()
+        for m in materiales:
+            autores = self.controller.get_material_authors(m)
+            
+            # Obtener idioma si existe
+            idiomas = self.controller.get_all_idiomas()
+            idioma_nombre = ""
+            if m.id_idioma:
+                idioma = next((i for i in idiomas if i.id_idioma == m.id_idioma), None)
+                idioma_nombre = idioma.nombre if idioma else ""
+            
             self.table.rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(m.id_material))),
                         ft.DataCell(ft.Text(m.titulo)),
-                        ft.DataCell(ft.Text(idioma.nombre if idioma else "")),
+                        ft.DataCell(ft.Text(idioma_nombre)),
                         ft.DataCell(ft.Text(str(m.año_publicacion or ""))),
                         ft.DataCell(ft.Text(autores)),
                         ft.DataCell(ft.Text(m.isbn or "")),
@@ -115,10 +126,15 @@ class MaterialView(ft.Column):
     # --------------------------------------------------------
     #              MODAL PARA DETALLE + EDITAR + BORRAR
     # --------------------------------------------------------
-    def open_detail_modal(self, material: Material):
-        print("Abriendo modal para material ID:", material.id_material)
-        autores = ", ".join([ma.autor.nombre for ma in material.autores])
-        idioma = self.session.query(Idioma).filter_by(id_idioma=material.id_idioma).first()
+    def open_detail_modal(self, material):
+        autores = self.controller.get_material_authors(material)
+        
+        # Obtener idioma si existe
+        idiomas = self.controller.get_all_idiomas()
+        idioma_nombre = "Desconocido"
+        if material.id_idioma:
+            idioma = next((i for i in idiomas if i.id_idioma == material.id_idioma), None)
+            idioma_nombre = idioma.nombre if idioma else "Desconocido"
 
         dialog = ft.AlertDialog(
             modal=True,
@@ -126,7 +142,7 @@ class MaterialView(ft.Column):
             content=ft.Column(
                 [
                     ft.Text(f"Título: {material.titulo}"),
-                    ft.Text(f"Idioma ID: {idioma.nombre if idioma else 'Desconocido'}"),
+                    ft.Text(f"Idioma: {idioma_nombre}"),
                     ft.Text(f"Año: {material.año_publicacion}"),
                     ft.Text(f"Descripción: {material.descripcion}"),
                     ft.Text(f"Autores: {autores}")
@@ -152,8 +168,7 @@ class MaterialView(ft.Column):
     #                    ELIMINAR MATERIAL
     # --------------------------------------------------------
     def delete_material(self, material, dialog):
-        self.session.delete(material)
-        self.session.commit()
+        self.controller.delete_material(material.id_material)
         dialog.open = False
         self.load_materials()
 
@@ -187,11 +202,15 @@ class MaterialView(ft.Column):
         )
 
         def save_changes(e):
-            material.titulo = titulo.value
-            material.descripcion = descripcion.value
-            material.año_publicacion = int(anio.value) if anio.value.isdigit() else None
-
-            self.session.commit()
+            año = int(anio.value) if anio.value.isdigit() else None
+            
+            self.controller.update_material(
+                material.id_material,
+                titulo=titulo.value,
+                descripcion=descripcion.value,
+                año_publicacion=año
+            )
+            
             edit_dialog.open = False
             self.load_materials()
 
@@ -252,19 +271,19 @@ class MaterialView(ft.Column):
         self.page.open(dialog)
 
         def create_material(e):
-            id_autor=int(autor_dropdown.value) if autor_dropdown.value else None
-            nuevo = Material(
+            año = int(anio.value) if anio.value.isdigit() else None
+            id_idioma = int(idioma.value) if idioma.value else None
+            
+            from model.models import MaterialAutor
+            
+            nuevo = self.controller.create_material(
                 titulo=titulo.value,
                 descripcion=descripcion.value,
-                año_publicacion=int(anio.value) if anio.value.isdigit() else None,
-                id_idioma=int(idioma.value) if idioma.value else None,
+                año_publicacion=año,
+                id_idioma=id_idioma,
                 tipo_material="Libro",
-                isbn=isbn.value,
+                isbn=isbn.value
             )
-
-
-            self.session.add(nuevo)
-            self.session.flush()
 
             if autor_dropdown.value:
                 relacion = MaterialAutor(
@@ -272,8 +291,8 @@ class MaterialView(ft.Column):
                     id_autor=int(autor_dropdown.value),
                 )
                 self.session.add(relacion)
+                self.session.commit()
 
-            self.session.commit()
             dialog.open = False
             self.load_materials()
             self.page.update()

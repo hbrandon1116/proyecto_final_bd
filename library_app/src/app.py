@@ -1,7 +1,6 @@
 import flet as ft
 from dotenv import load_dotenv
 from controllers.authControllers import AuthController
-from view.views import MainView
 from view.loginView import LoginView
 from view.registerView import RegisterView
 from view.librarianView import LibrarianView
